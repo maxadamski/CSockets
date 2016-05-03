@@ -60,7 +60,6 @@ public enum SocketOption {
 	case ReceiveBufferSize(Int)
 	case SendBufferSize(Int)
 	case OOBInline(Bool)
-	case UseIPv4
 }
 
 public struct MessageOptions: OptionSet {
@@ -167,8 +166,6 @@ public func setsockopt(socket s: Int32, option: SocketOption) throws {
 	case .OOBInline(let v):
 		let value: Int32 = v == true ? 1 : 0
 		try setsockopt(socket: s, level: SOL_SOCKET, option: SO_OOBINLINE, value: value)
-	case .UseIPv4:
-		break
 	}
 }
 
