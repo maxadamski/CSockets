@@ -87,8 +87,8 @@ public struct NameLookupOptions: OptionSet {
 
 // MARK: - Address Lookup
 
-public func getaddrinfo(host host: String? = nil, service: String, hints: CAddressInfo) throws -> [CAddressInfo] {
-	var info: UnsafeMutablePointer<CAddressInfo> = nil
+public func getaddrinfo(host: String? = nil, service: String, hints: CAddressInfo) throws -> [CAddressInfo] {
+	var info: UnsafeMutablePointer<CAddressInfo>? = nil
 	var addresses = [CAddressInfo]()
 	var hintsCopy = hints
 	let status: Int32
@@ -99,9 +99,9 @@ public func getaddrinfo(host host: String? = nil, service: String, hints: CAddre
 		status = getaddrinfo(nil, service, &hintsCopy, &info)
 	}
 	
-	while info != nil {
-		addresses.append(info.pointee)
-		info = info.pointee.ai_next
+	while let i = info?.pointee {
+		addresses.append(i)
+		info = i.ai_next
 	}
 	
 	freeaddrinfo(info)
@@ -114,7 +114,7 @@ public func getaddrinfo(host host: String? = nil, service: String, hints: CAddre
 	return addresses
 }
 
-public func getnameinfo(address address: CSocketAddressStorage, options: Int32) throws -> (host: String, service: String) {
+public func getnameinfo(address: CSocketAddressStorage, options: Int32) throws -> (host: String, service: String) {
 	var addrcopy = address
 	let addrptr = withUnsafeMutablePointer(&addrcopy) { return UnsafeMutablePointer<sockaddr>($0) }
 	var host = [Byte](repeating: 0, count: Int(NI_MAXHOST))
@@ -130,7 +130,7 @@ public func getnameinfo(address address: CSocketAddressStorage, options: Int32) 
 	return (String(cString: host), String(cString: serv))
 }
 
-public func getnameinfo(address address: CSocketAddressStorage, options: NameLookupOptions = []) throws -> (host: String, service: String) {
+public func getnameinfo(address: CSocketAddressStorage, options: NameLookupOptions = []) throws -> (host: String, service: String) {
 	return try getnameinfo(address: address, options: options.rawValue)
 }
 
@@ -171,17 +171,17 @@ public func setsockopt(socket s: Int32, option: SocketOption) throws {
 
 // MARK: - Socket Factory
 
-public func socket(family family: Int32, type: Int32, proto: Int32) throws -> Int32 {
+public func socket(family: Int32, type: Int32, proto: Int32) throws -> Int32 {
 	let fd = socket(family, type, proto)
 	guard fd > 0 else { throw Error.CreateError(Error()) }
 	return fd
 }
 
-public func socket(family family: AddressFamily, type: SocketType) throws -> Int32 {
+public func socket(family: AddressFamily, type: SocketType) throws -> Int32 {
 	return try socket(family: family.cValue, type: type.cValue, proto: family.cValue)
 }
 
-public func socket(info info: CAddressInfo) throws -> Int32 {
+public func socket(info: CAddressInfo) throws -> Int32 {
 	return try socket(family: info.ai_family, type: info.ai_socktype, proto: info.ai_protocol)
 }
 
@@ -311,7 +311,7 @@ extension Error {
 	init() {
 		switch errno {
 		default:
-			let error = String(cString: strerror(errno))
+			let error = String(cString: strerror(errno)) ?? ""
 			self = .Unknown(message: "<Error \(errno)>: \(error)")
 		}
 	}
