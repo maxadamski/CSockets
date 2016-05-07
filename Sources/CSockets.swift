@@ -30,6 +30,16 @@ public enum AddressFamily {
 	}
 }
 
+public enum AddressInfoFlag {
+	case Passive
+	
+	public var cValue: Int32 {
+		switch self {
+		case .Passive: return AI_PASSIVE
+		}
+	}
+}
+
 public enum SocketType {
 	case Stream, Datagram, Raw
 	
